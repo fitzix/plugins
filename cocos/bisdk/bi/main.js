@@ -70,7 +70,7 @@ async function onBeforeBuildFinish(options, callback) {
      * BISDK 初始化
      */
     ${sdkGlobalMap.get(options.actualPlatform)}.leuok.init({
-      url: ${buildConfig.url},
+      url: '${buildConfig.url}',
       gameId: ${buildConfig.game},
       regionId: ${buildConfig.region},
       channelId: ${buildConfig.channel}
@@ -140,7 +140,7 @@ async function onBeforeBuildFinish(options, callback) {
        */
       require('./leuok.bi.${sdkMap.get(options.actualPlatform)}.js');
       ${sdkGlobalMap.get(options.actualPlatform)}.leuok.init({
-        url: ${buildConfig.url},
+        url: '${buildConfig.url}',
         gameId: ${buildConfig.game},
         regionId: ${buildConfig.region},
         iOS: ${buildConfig.iOS},
@@ -178,20 +178,31 @@ module.exports = {
     'bi-used-changed'(event, config) {
       Editor.Panel.close('bi')
 
+      let buildConfig = getBuildConfig()
+      // 判断是否在load时已开启监听
+      if (buildConfig.used != config.used) {
+        if (config.used) {
+          Editor.log('【BISDK】', '开启构建后添加SDK', config)
+          Editor.Builder.on('before-change-files', onBeforeBuildFinish)
+        } else {
+          Editor.log('【BISDK】', '关闭构建后添加SDK')
+          Editor.Builder.removeListener('before-change-files', onBeforeBuildFinish)
+        }
+      } else {
+        if (config.used) {
+          Editor.log('【BISDK】', '开启构建后添加SDK', config)
+        } else {
+          Editor.log('【BISDK】', '关闭构建后添加SDK')
+        }
+      }
+
       let settingPath = path.join(Editor.Project.path, 'settings', 'bi-sdk-plugin.json')
       fs.writeFile(settingPath, JSON.stringify(config, null, 4), (err) => {
         if (err) {
           Editor.error('【BISDK】', '生成配置文件失败', err.message)
         }
       })
-      if (config.used) {
-        Editor.log('【BISDK】', '开启构建后添加SDK', config)
-        Editor.Builder.on('before-change-files', onBeforeBuildFinish)
-        return
-      }
-
-      Editor.log('【BISDK】', '关闭构建后添加SDK')
-      Editor.Builder.removeListener('before-change-files', onBeforeBuildFinish)
+      
     },
     'open'() {
       // open entry panel registered in package.json
