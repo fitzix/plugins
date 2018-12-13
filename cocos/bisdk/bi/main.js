@@ -131,6 +131,9 @@ async function onBeforeBuildFinish(options, callback) {
   if (['qqplay', 'wechatgame'].includes(options.actualPlatform)) {
     let mainJsPath = path.join(options.dest, 'main.js')
     let script = fs.readFileSync(mainJsPath, 'utf8')
+
+    let requireScript = options.actualPlatform === 'qqplay' ? `BK.Script.loadlib('GameRes://leuok.bi.qq.js');` : `require('./leuok.bi.wx.js');`
+
     fs.writeFileSync(mainJsPath, `
 
       /**
@@ -138,7 +141,7 @@ async function onBeforeBuildFinish(options, callback) {
        * All rights reserved.
        * BISDK 初始化
        */
-      require('./leuok.bi.${sdkMap.get(options.actualPlatform)}.js');
+      ${requireScript}
       ${sdkGlobalMap.get(options.actualPlatform)}.leuok.init({
         url: '${buildConfig.url}',
         gameId: ${buildConfig.game},
